@@ -1,0 +1,7 @@
+simulateModel("Annex60.Fluid.MixingVolumes.Examples.MixingVolumeSteStaPreTemZeroFlow", tolerance=1E-6, method="dassl", resultFile="MixingVolumeSteStaPreTemZeroFlow");
+createPlot(id=1, 
+position={0, 0, 1558, 934}, 
+y={"vol.T"}, 
+range={0.0, 2.0, 283.0, 288.4}, 
+grid=true,
+colors={{28,108,200}});
