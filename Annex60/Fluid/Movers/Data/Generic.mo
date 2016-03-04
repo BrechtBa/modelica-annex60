@@ -14,22 +14,6 @@ record Generic "Generic data record for movers"
     "Use power data instead of motor efficiency"
     annotation (Dialog(group="Power computation"));
 
-  parameter
-    Annex60.Fluid.Movers.BaseClasses.Characteristics.efficiencyParameters
-    hydraulicEfficiency(
-      V_flow={0},
-      eta={0.7}) "Hydraulic efficiency (used if use_powerCharacteristic=false)"
-    annotation (Dialog(group="Power computation",
-                       enable=not use_powerCharacteristic));
-  parameter
-    Annex60.Fluid.Movers.BaseClasses.Characteristics.efficiencyParameters
-    motorEfficiency(
-      V_flow={0},
-      eta={0.7})
-    "Electric motor efficiency (used if use_powerCharacteristic=false)"
-    annotation (Dialog(group="Power computation",
-                       enable=not use_powerCharacteristic));
-
   // Power requires default values to avoid in Dymola the message
   // Failed to expand the variable Power.V_flow
   parameter BaseClasses.Characteristics.powerParameters power(
@@ -38,6 +22,34 @@ record Generic "Generic data record for movers"
     "Volume flow rate vs. electrical power consumption (used if use_powerCharacteristic=true)"
    annotation (Dialog(group="Power computation",
                       enable=use_powerCharacteristic));
+
+  parameter
+    Annex60.Fluid.Movers.BaseClasses.Characteristics.efficiencyParameters
+    hydraulicEfficiency(
+      V_flow=if havePressureCurve and havePowerCurve then pressure.V_flow else {0},
+      eta=if havePressureCurve and havePowerCurve then
+        sqrt(pressure.V_flow*pressure.dp./(
+        {Annex60.Fluid.Movers.BaseClasses.Characteristics.power(
+        per=power,
+        V_flow=i,
+        r_N=1,
+        delta=0.01,
+        d=Annex60.Utilities.Math.Functions.splineDerivatives(
+        x=power.V_flow,
+        y=power.P))
+        for i in pressure.V_flow}))
+       else {0.7})
+    "Hydraulic efficiency (used if use_powerCharacteristic=false)"
+    annotation (Dialog(group="Power computation",
+                       enable=not use_powerCharacteristic));
+  parameter
+    Annex60.Fluid.Movers.BaseClasses.Characteristics.efficiencyParameters
+    motorEfficiency(
+      V_flow= hydraulicEfficiency.V_flow,
+      eta=hydraulicEfficiency.eta)
+    "Electric motor efficiency (used if use_powerCharacteristic=false)"
+    annotation (Dialog(group="Power computation",
+                       enable=not use_powerCharacteristic));
 
   parameter Boolean motorCooledByFluid=true
     "If true, then motor heat is added to fluid stream"
@@ -77,7 +89,10 @@ record Generic "Generic data record for movers"
     sum(pressure.V_flow) > Modelica.Constants.eps and
     sum(pressure.dp) > Modelica.Constants.eps
     "= true, if default record values are being used";
-
+  final parameter Boolean havePowerCurve=
+    sum(power.V_flow) > Modelica.Constants.eps and
+    sum(power.P) > Modelica.Constants.eps
+    "= true, if default record values are being used";
   annotation (
   defaultComponentPrefixes = "parameter",
   defaultComponentName = "per",
