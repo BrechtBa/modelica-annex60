@@ -4,7 +4,7 @@ model Example1
   Stratified tan(
     redeclare package Medium = Medium,
     m_flow_nominal=1,
-    VTan=1.225*Modelica.Constants.pi*0.272^2,
+    VTan=0.267,
     hTan=1.225,
     dIns=0.1,
     d=0.04,
