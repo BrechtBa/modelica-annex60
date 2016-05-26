@@ -1,6 +1,6 @@
 within Annex60.Fluid.Storage;
 model Stratified "Model of a stratified tank for thermal energy storage"
-  extends Buildings.Fluid.Interfaces.PartialTwoPortInterface;
+  extends Annex60.Fluid.Interfaces.PartialTwoPortInterface;
 
   replaceable package Medium =
       Modelica.Media.Interfaces.PartialSimpleMedium;
@@ -16,7 +16,8 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     "Height of inlet/outlet port_a compared to bottom tank";
   parameter Modelica.SIunits.Length h_port_b(min=0, max=hTan)
     "Height of inlet/outlet port_a compared to bottom tank";
-  parameter Integer nSeg(min=2) = 20 "Number of volume segments";
+  parameter Integer nSeg(min=2) = 20
+    "Number of volume segments   why do you use Seg here and Lay everywhere else";
 
   ////////////////////////////////////////////////////////////////////
   // Assumptions
@@ -68,7 +69,7 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     annotation (Placement(transformation(extent={{14,-70},{26,-58}})));
 
   // Models
-  Buildings.Fluid.MixingVolumes.MixingVolume[nSeg] vol(
+  Annex60.Fluid.MixingVolumes.MixingVolume[nSeg] vol(
     redeclare each package Medium = Medium,
     each energyDynamics=energyDynamics,
     each massDynamics=massDynamics,
@@ -76,13 +77,14 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     each T_start=T_start,
     each X_start=X_start,
     each C_start=C_start,
-    each V=VTan/nSeg,
+    V=geometry.VLay,
     nPorts={if i==1 or i==nSeg then 3 else 4 for i in 1:nSeg},
     each m_flow_nominal=m_flow_nominal,
     each final mSenFac=1,
     each final m_flow_small=m_flow_small,
     each final allowFlowReversal=allowFlowReversal) "Tank segment"
     annotation (Placement(transformation(extent={{6,-16},{26,4}})));
+                         // not correct, and this is important when comparing to the validation data, the model assumes equal height volumes to be able to easily divide the flow over the correct layers
 protected
   constant Integer nPorts = 2 "Number of ports of volume";
 
@@ -91,24 +93,24 @@ protected
     p=Medium.p_default,
     X=Medium.X_default[1:Medium.nXi]) "Medium state at default properties";
   parameter Modelica.SIunits.Length hSeg = hTan / nSeg
-    "Height of a tank segment";
+    "Height of a tank segment";                           // this is correct but does not correspond to equal volumes above
   parameter Modelica.SIunits.Area ATan = VTan/hTan
     "Tank cross-sectional area (without insulation)";
   parameter Modelica.SIunits.Length rTan = sqrt(ATan/Modelica.Constants.pi)
-    "Tank diameter (without insulation)";
+    "Tank diameter (without insulation)"; // confusion notation rTan for diameter
   parameter Modelica.SIunits.ThermalConductance conFluSeg = ATan*Medium.thermalConductivity(sta_default)/hSeg
     "Thermal conductance between fluid volumes";
   parameter Modelica.SIunits.ThermalConductance conTopSeg = ATan*kIns/dIns
     "Thermal conductance from center of top (or bottom) volume through tank insulation at top (or bottom)";
 
-  Buildings.Fluid.Sensors.EnthalpyFlowRate H_a_flow(
+  Annex60.Fluid.Sensors.EnthalpyFlowRate H_a_flow(
     redeclare package Medium = Medium,
     final m_flow_nominal=m_flow_nominal,
     final tau=0,
     final allowFlowReversal=allowFlowReversal,
     final m_flow_small=m_flow_small) "Enthalpy flow rate at port a"
     annotation (Placement(transformation(extent={{-70,-90},{-50,-70}})));
-  Buildings.Fluid.Sensors.EnthalpyFlowRate[nSeg - 1] H_vol_flow(
+  Annex60.Fluid.Sensors.EnthalpyFlowRate[nSeg - 1] H_vol_flow(
     redeclare package Medium = Medium,
     each final m_flow_nominal=m_flow_nominal,
     each final tau=0,
@@ -116,7 +118,7 @@ protected
     each final m_flow_small=m_flow_small)
     "Enthalpy flow rate between the volumes"
     annotation (Placement(transformation(extent={{-20,-50},{0,-30}})));
-  Buildings.Fluid.Sensors.EnthalpyFlowRate H_b_flow(
+  Annex60.Fluid.Sensors.EnthalpyFlowRate H_b_flow(
     redeclare package Medium = Medium,
     final m_flow_nominal=m_flow_nominal,
     final tau=0,
@@ -159,12 +161,18 @@ protected
     "Connector to assign multiple heat ports to one heat port"
     annotation (Placement(transformation(extent={{46,20},{58,32}})));
 public
+  BaseClasses.GeometryKlopper geometry(
+    VTan=VTan,
+    hTan=hTan,
+    nLay=nSeg);
+
   BaseClasses.JetInflow jetInflow(
     redeclare package Medium = Medium,
     nSeg=nSeg,
     m_flow_nominal=m_flow_nominal,
     Vlay=vol.V,
-    D=2*sqrt((VTan/hTan)/Modelica.Constants.pi),
+    D=geometry.dTan,
+    hTan=hTan,
     hIn=h_port_a,
     d=d,
     hLay={(i - 0.5)*hTan/nSeg for i in 1:nSeg})
@@ -175,7 +183,8 @@ public
     m_flow_nominal=m_flow_nominal,
     Vlay=vol.V,
     hIn=h_port_b,
-    D=2*sqrt((VTan/hTan)/Modelica.Constants.pi),
+    D=geometry.dTan,
+    hTan=hTan,
     d=d,
     hLay={(i - 0.5)*hTan/nSeg for i in 1:nSeg})
     annotation (Placement(transformation(extent={{40,-90},{20,-70}})));

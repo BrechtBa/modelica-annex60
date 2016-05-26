@@ -2,21 +2,22 @@ within Annex60.Fluid.Storage.BaseClasses;
 model JetInflow "Model for simulating jet inflow"
   replaceable package Medium = Modelica.Media.Interfaces.PartialMedium;
 
-  parameter Integer nSeg(min=10) "Number of layers in the storage tank";
+  parameter Integer nSeg(min=10)
+    "Number of layers in the storage tank  why do you use Seg here and Lay everywhere else";
   parameter Modelica.SIunits.MassFlowRate m_flow_nominal
     "Nominal mass flow rate, used for regularization only";
   parameter Modelica.SIunits.Volume Vlay[nSeg] "Volume of each layer";
   parameter Modelica.SIunits.Length d "Diameter of inlet";
   parameter Modelica.SIunits.Length D "Diameter of tank";
+  parameter Modelica.SIunits.Length hTan "Tank height";
   parameter Modelica.SIunits.Length hIn "Height of inlet center"
     annotation(Evaluate=true);
   parameter Modelica.SIunits.Length hLay[nSeg] "Height of layer centers"
     annotation(Evaluate=true);
-  parameter Modelica.SIunits.Length dLay[nSeg]=Vlay/(Modelica.Constants.pi*(D/2)^2)
+  parameter Modelica.SIunits.Length dLay[nSeg]={hTan/nSeg for i in 1:nSeg}
     "Layer thicknesses"
     annotation(Evaluate=true);
-  parameter Modelica.SIunits.Length hTan = max(dLay/2+hLay)-min(hLay-dLay/2)
-    "Tank height";
+                         // why not use t for thickness?
 
   parameter Modelica.SIunits.Time tau = 60
     "Mixing time constant for calculation of Froude number";
@@ -43,7 +44,7 @@ model JetInflow "Model for simulating jet inflow"
   Real coeffMix[nSeg]=rMix*wInj/wInjTot;
   Real hMix = if port_a.m_flow > 0 then
                 (inStream(port_a.h_outflow)+coeffMix*inStream(ports_b.h_outflow))/(1+rMix) else
-                inStream(ports_b.h_outflow)*wInj/wInjTot;
+                inStream(ports_b.h_outflow)*wInj/wInjTot;  // the mixing temperature is of no importance otherwise
   Real XiMix[Medium.nXi]=
               {if port_a.m_flow > 0 then
                   (XiIn_a[i]+coeffMix*XiIn_b[:,i])/(1+rMix)
@@ -86,13 +87,13 @@ protected
     "Coefficient for efficient evaluation of Reynolds number - fixme: non-default state?";
   final parameter Real coeff_Fr =  1/coeff_v/sqrt(Modelica.Constants.g_n*beta*D);
   final parameter Modelica.SIunits.Length dh[nSeg] = hLay-fill(hIn,nSeg)
-    "Height difference between inlet and outlets";
+    "Height difference between inlet and outlets";  // should be "Height difference between volumes and inlet"
 
 equation
   // The state for the Froude number decouples an algebraic loop
   // that would otherwise couple the enthalpy calculations and the mass flow rate calculations
   // this could possibly lead to very large algebraic loops
-  der(Fr) =  (abs(port_a.m_flow)*coeff_Fr/max(0.01,abs(Tmix-Tin_a)^0.5)-Fr)/tau;
+  der(Fr) =  (abs(port_a.m_flow)*coeff_Fr/max(0.01,abs(Tmix-Tin_a)^0.5)-Fr)/tau;   // this is the wrong temperature difference the temperature difference in my model is calculated as a gaussian wheighted average of the temperature surrounding the inlet, and the inlet temperature abs(Tsur-Tin_a) ,  Tsur = sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2)*Tin_b[i] for i in 1:nSeg) / sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2) for i in 1:nSeg), indeed, this is poorly described in the paper
   port_a.h_outflow= hMix;
   ports_b.h_outflow=fill(hMix,nSeg)*(1+rMix) - inStream(ports_b.h_outflow)*rMix
     "Enthalpy that should flow to volumes after applying conservation of energy to fictive mass flow rate";
@@ -110,5 +111,4 @@ equation
       Medium.temperature(Medium.setState_phX(port_a.p, hMix, wInj*inStream(ports_b.Xi_outflow)/wInjTot));
   annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
             -100},{100,100}})));
-
 end JetInflow;
