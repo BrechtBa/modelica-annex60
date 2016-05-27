@@ -51,6 +51,8 @@ model JetInflow "Model for simulating jet inflow"
                else wInj/wInjTot*XiIn_b[:,i] for i in 1:Medium.nXi};
   Modelica.SIunits.Temperature Tmix;
 
+  Modelica.SIunits.Temperature Tsur;
+
   Real Re = abs(port_a.m_flow)*coeff_Re "Reynolds number";
   Real Fr "Froude number";
 
@@ -93,7 +95,11 @@ equation
   // The state for the Froude number decouples an algebraic loop
   // that would otherwise couple the enthalpy calculations and the mass flow rate calculations
   // this could possibly lead to very large algebraic loops
-  der(Fr) =  (abs(port_a.m_flow)*coeff_Fr/max(0.01,abs(Tmix-Tin_a)^0.5)-Fr)/tau;   // this is the wrong temperature difference the temperature difference in my model is calculated as a gaussian wheighted average of the temperature surrounding the inlet, and the inlet temperature abs(Tsur-Tin_a) ,  Tsur = sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2)*Tin_b[i] for i in 1:nSeg) / sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2) for i in 1:nSeg), indeed, this is poorly described in the paper
+
+  // temperature difference is calculated as a gaussian wheighted average of the temperature surrounding the inlet, and the inlet temperature abs(Tsur-Tin_a)
+  Tsur = sum( exp(-6*(hLay[i]-hIn)^2/(0.5*D)^2)*Tin_b[i] for i in 1:nSeg) / sum( exp(-6*(hLay[i]-hIn)^2/(0.5*D)^2) for i in 1:nSeg);
+
+  der(Fr) =  (abs(port_a.m_flow)*coeff_Fr/max(0.01,abs(Tsur-Tin_a)^0.5)-Fr)/tau;   // this is the wrong temperature difference the temperature difference in my model is calculated as a gaussian wheighted average of the temperature surrounding the inlet, and the inlet temperature abs(Tsur-Tin_a) ,  Tsur = sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2)*Tin_b[i] for i in 1:nSeg) / sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2) for i in 1:nSeg), indeed, this is poorly described in the paper
   port_a.h_outflow= hMix;
   ports_b.h_outflow=fill(hMix,nSeg)*(1+rMix) - inStream(ports_b.h_outflow)*rMix
     "Enthalpy that should flow to volumes after applying conservation of energy to fictive mass flow rate";
