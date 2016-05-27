@@ -34,6 +34,10 @@ model Example1
     redeclare package Medium = Medium,
     m_flow_nominal=1,
     tau=0) annotation (Placement(transformation(extent={{40,0},{60,20}})));
+  Modelica.Blocks.Math.Add[20] K2degC
+    annotation (Placement(transformation(extent={{-66,-26},{-46,-6}})));
+  Modelica.Blocks.Sources.Constant[20] AbsoluteZero(k=-273.15)
+    annotation (Placement(transformation(extent={{-98,-32},{-78,-12}})));
 equation
   connect(tan.port_a, boundary.ports[1])
     annotation (Line(points={{0,10},{-8,10},{-14,10}}, color={0,127,255}));
@@ -49,6 +53,10 @@ equation
   connect(combiTimeTable.y[1], lmin2kgs.u) annotation (Line(points={{-77,14},{-72,
           14},{-72,36},{-68,36}},
                                 color={0,0,127}));
+  connect(AbsoluteZero.y, K2degC.u2)
+    annotation (Line(points={{-77,-22},{-77,-22},{-68,-22}}, color={0,0,127}));
+  connect(K2degC.u1, combiTimeTable.y) annotation (Line(points={{-68,-10},{-72,
+          -10},{-72,14},{-77,14}}, color={0,0,127}));
    annotation (Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,
             -100},{100,100}})),
     experiment(StopTime=3000),
