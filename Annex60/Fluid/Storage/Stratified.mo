@@ -84,7 +84,7 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     each final m_flow_small=m_flow_small,
     each final allowFlowReversal=allowFlowReversal) "Tank segment"
     annotation (Placement(transformation(extent={{6,-16},{26,4}})));
-                         // not correct, and this is important when comparing to the validation data, the model assumes equal height volumes to be able to easily divide the flow over the correct layers
+
 protected
   constant Integer nPorts = 2 "Number of ports of volume";
 
