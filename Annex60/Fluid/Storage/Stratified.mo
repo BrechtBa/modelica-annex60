@@ -59,14 +59,17 @@ model Stratified "Model of a stratified tank for thermal energy storage"
 
   Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_a heaPorSid
     "Heat port tank side (outside insulation)"
-    annotation (Placement(transformation(extent={{50,-6},{62,6}})));
+    annotation (Placement(transformation(extent={{62,30},{74,42}}),
+        iconTransformation(extent={{40,-6},{52,6}})));
 
   Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_a heaPorTop
     "Heat port tank top (outside insulation)"
-    annotation (Placement(transformation(extent={{14,68},{26,80}})));
+    annotation (Placement(transformation(extent={{38,84},{50,96}}),
+        iconTransformation(extent={{14,60},{26,72}})));
   Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_a heaPorBot
     "Heat port tank bottom (outside insulation). Leave unconnected for adiabatic condition"
-    annotation (Placement(transformation(extent={{14,-70},{26,-58}})));
+    annotation (Placement(transformation(extent={{40,12},{52,24}}),
+        iconTransformation(extent={{14,-72},{26,-60}})));
 
   // Models
   Annex60.Fluid.MixingVolumes.MixingVolume[nSeg] vol(
@@ -78,7 +81,7 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     each X_start=X_start,
     each C_start=C_start,
     V=geometry.VLay,
-    nPorts={if i==1 or i==nSeg then 3 else 4 for i in 1:nSeg},
+    nPorts=4,
     each m_flow_nominal=m_flow_nominal,
     each final mSenFac=1,
     each final m_flow_small=m_flow_small,
@@ -109,7 +112,7 @@ protected
     final tau=0,
     final allowFlowReversal=allowFlowReversal,
     final m_flow_small=m_flow_small) "Enthalpy flow rate at port a"
-    annotation (Placement(transformation(extent={{-70,-90},{-50,-70}})));
+    annotation (Placement(transformation(extent={{-90,-90},{-70,-70}})));
   Annex60.Fluid.Sensors.EnthalpyFlowRate[nSeg - 1] H_vol_flow(
     redeclare package Medium = Medium,
     each final m_flow_nominal=m_flow_nominal,
@@ -117,49 +120,53 @@ protected
     each final allowFlowReversal=allowFlowReversal,
     each final m_flow_small=m_flow_small)
     "Enthalpy flow rate between the volumes"
-    annotation (Placement(transformation(extent={{-20,-50},{0,-30}})));
+    annotation (Placement(transformation(extent={{2,-92},{22,-72}})));
+  Annex60.Fluid.Sensors.MassFlowRate[nSeg - 1] m_vol_flow(
+    redeclare package Medium = Medium) "Mass flow rate between the volumes"
+    annotation (Placement(transformation(extent={{-28,-92},{-8,-72}})));
+
   Annex60.Fluid.Sensors.EnthalpyFlowRate H_b_flow(
     redeclare package Medium = Medium,
     final m_flow_nominal=m_flow_nominal,
     final tau=0,
     final allowFlowReversal=allowFlowReversal,
     final m_flow_small=m_flow_small) "Enthalpy flow rate at port b"
-    annotation (Placement(transformation(extent={{50,-90},{70,-70}})));
+    annotation (Placement(transformation(extent={{70,-90},{90,-70}})));
   Modelica.Thermal.HeatTransfer.Components.ThermalConductor[nSeg - 1] conFlu(
     each G=conFluSeg) "Thermal conductance in fluid between the segments"
     annotation (Placement(transformation(extent={{-56,4},{-42,18}})));
   Modelica.Thermal.HeatTransfer.Components.ThermalConductor[nSeg] conWal(
      each G=2*Modelica.Constants.pi*kIns*hSeg/Modelica.Math.log((rTan+dIns)/rTan))
     "Thermal conductance through tank wall"
-    annotation (Placement(transformation(extent={{10,34},{20,46}})));
+    annotation (Placement(transformation(extent={{10,50},{20,62}})));
   Modelica.Thermal.HeatTransfer.Components.ThermalConductor conTop(
      G=conTopSeg) "Thermal conductance through tank top"
-    annotation (Placement(transformation(extent={{10,54},{20,66}})));
+    annotation (Placement(transformation(extent={{10,70},{20,82}})));
   Modelica.Thermal.HeatTransfer.Components.ThermalConductor conBot(
      G=conTopSeg) "Thermal conductance through tank bottom"
-    annotation (Placement(transformation(extent={{10,14},{20,26}})));
+    annotation (Placement(transformation(extent={{10,30},{20,42}})));
 
   Modelica.Thermal.HeatTransfer.Sensors.HeatFlowSensor heaFloTop
     "Heat flow at top of tank (outside insulation)"
-    annotation (Placement(transformation(extent={{30,54},{42,66}})));
+    annotation (Placement(transformation(extent={{30,70},{42,82}})));
   Modelica.Thermal.HeatTransfer.Sensors.HeatFlowSensor heaFloBot
     "Heat flow at bottom of tank (outside insulation)"
-    annotation (Placement(transformation(extent={{30,14},{42,26}})));
+    annotation (Placement(transformation(extent={{30,30},{42,42}})));
   Modelica.Thermal.HeatTransfer.Sensors.HeatFlowSensor heaFloSid[nSeg]
     "Heat flow at wall of tank (outside insulation)"
-    annotation (Placement(transformation(extent={{30,34},{42,46}})));
+    annotation (Placement(transformation(extent={{30,50},{42,62}})));
 
   Modelica.Blocks.Routing.Multiplex3 mul(
     n1=1,
     n2=nSeg,
     n3=1) "Multiplex to collect heat flow rates"
-    annotation (Placement(transformation(extent={{62,44},{70,54}})));
+    annotation (Placement(transformation(extent={{62,62},{70,72}})));
   Modelica.Blocks.Math.Sum sum1(nin=nSeg + 2)
-  annotation (Placement(transformation(extent={{78,42},{90,56}})));
+  annotation (Placement(transformation(extent={{78,60},{90,74}})));
 
   Modelica.Thermal.HeatTransfer.Components.ThermalCollector theCol(m=nSeg)
     "Connector to assign multiple heat ports to one heat port"
-    annotation (Placement(transformation(extent={{46,20},{58,32}})));
+    annotation (Placement(transformation(extent={{46,36},{58,48}})));
 public
   BaseClasses.GeometryKlopper geometry(
     VTan=VTan,
@@ -176,7 +183,7 @@ public
     hIn=h_port_a,
     d=d,
     hLay={(i - 0.5)*hTan/nSeg for i in 1:nSeg})
-    annotation (Placement(transformation(extent={{-40,-90},{-20,-70}})));
+    annotation (Placement(transformation(extent={{-66,-90},{-46,-70}})));
   BaseClasses.JetInflow outflow(
     redeclare package Medium = Medium,
     nSeg=nSeg,
@@ -187,20 +194,25 @@ public
     hTan=hTan,
     d=d,
     hLay={(i - 0.5)*hTan/nSeg for i in 1:nSeg})
-    annotation (Placement(transformation(extent={{40,-90},{20,-70}})));
+    annotation (Placement(transformation(extent={{66,-90},{46,-70}})));
   parameter Modelica.SIunits.Length d "Diameter of inlets";
+
 equation
-  connect(H_b_flow.port_b, port_b) annotation (Line(points={{70,-80},{80,-80},{80,
-          5.55112e-16},{100,5.55112e-16}}, color={0,127,255}));
+  connect(H_b_flow.port_b, port_b) annotation (Line(points={{90,-80},{92,-80},{92,
+          0},{100,0}},                     color={0,127,255}));
   for i in 1:(nSeg-1) loop
 
-    connect(vol[i].ports[3], H_vol_flow[i].port_a) annotation (Line(points={{16,-16},
-            {16,-20},{-28,-20},{-28,-40},{-20,-40}},      color={0,127,255}));
-    connect(H_vol_flow[i].port_b, vol[i + 1].ports[if i==nSeg -1 then 3 else 4]) annotation (Line(points={{
-            5.55112e-16,-40},{4,-40},{4,-16},{16,-16}},  color={0,127,255}));
+    connect(vol[i].ports[3], m_vol_flow[i].port_a) annotation (Line(points={{17,-16},
+            {17,-22},{-38,-22},{-38,-82},{-28,-82}},      color={0,127,255}));
+
+    connect(m_vol_flow[i].port_b, H_vol_flow[i].port_a) annotation (Line(points={{-8,-82},
+            {34,-82},{34,-22},{20,-22},{20,-82},{2,-82}},color={0,127,255}));
+    connect(H_vol_flow[i].port_b, vol[i + 1].ports[if i==nSeg -1 then 3 else 4]) annotation (Line(points={{22,-82},
+            {34,-82},{34,-22},{20,-22},{20,-16},{16,-16}},
+                                                         color={0,127,255}));
   end for;
-   connect(port_a, H_a_flow.port_a) annotation (Line(points={{-100,5.55112e-16},{
-          -80,5.55112e-16},{-80,-80},{-70,-80}}, color={0,127,255}));
+   connect(port_a, H_a_flow.port_a) annotation (Line(points={{-100,0},{-92,0},{-92,
+          -80},{-90,-80}},                       color={0,127,255}));
   for i in 1:nSeg-1 loop
   // heat conduction between fluid nodes
      connect(vol[i].heatPort, conFlu[i].port_a)    annotation (Line(points={{6,-6},{
@@ -210,52 +222,52 @@ equation
   end for;
 
   connect(vol[1].heatPort, conTop.port_a)    annotation (Line(points={{6,-6},{6,
-          60},{10,60}},                      color={191,0,0}));
-  connect(vol.heatPort, conWal.port_a)    annotation (Line(points={{6,-6},{6,40},
-          {10,40}},                      color={191,0,0}));
-  connect(conBot.port_a, vol[nSeg].heatPort)    annotation (Line(points={{10,20},
-          {10,20},{6,20},{6,-6}},
+          76},{10,76}},                      color={191,0,0}));
+  connect(vol.heatPort, conWal.port_a)    annotation (Line(points={{6,-6},{6,56},
+          {10,56}},                      color={191,0,0}));
+  connect(conBot.port_a, vol[nSeg].heatPort)    annotation (Line(points={{10,36},
+          {10,36},{6,36},{6,-6}},
                                color={191,0,0}));
   connect(vol.heatPort, heaPorVol)    annotation (Line(points={{6,-6},{6,-6},{
           -2.22045e-16,-6},{-2.22045e-16,-2.22045e-16}},
         color={191,0,0}));
   connect(conWal.port_b, heaFloSid.port_a)
-    annotation (Line(points={{20,40},{30,40}}, color={191,0,0}));
+    annotation (Line(points={{20,56},{30,56}}, color={191,0,0}));
 
   connect(conTop.port_b, heaFloTop.port_a)
-    annotation (Line(points={{20,60},{30,60}}, color={191,0,0}));
+    annotation (Line(points={{20,76},{30,76}}, color={191,0,0}));
   connect(conBot.port_b, heaFloBot.port_a)
-    annotation (Line(points={{20,20},{30,20}}, color={191,0,0}));
-  connect(heaFloTop.port_b, heaPorTop) annotation (Line(points={{42,60},{52,60},
-          {52,74},{20,74}}, color={191,0,0}));
-  connect(heaFloBot.port_b, heaPorBot) annotation (Line(points={{42,20},{44,20},
-          {44,-64},{20,-64}}, color={191,0,0}));
-  connect(heaFloTop.Q_flow, mul.u1[1]) annotation (Line(points={{36,54},{50,54},
-          {50,52.5},{61.2,52.5}}, color={0,0,127}));
-  connect(heaFloSid.Q_flow, mul.u2) annotation (Line(points={{36,34},{50,34},{
-          50,49},{61.2,49}}, color={0,0,127}));
-  connect(heaFloBot.Q_flow, mul.u3[1]) annotation (Line(points={{36,14},{36,10},
-          {58,10},{58,45.5},{61.2,45.5}}, color={0,0,127}));
-  connect(mul.y, sum1.u) annotation (Line(points={{70.4,49},{76.8,49}}, color={
+    annotation (Line(points={{20,36},{30,36}}, color={191,0,0}));
+  connect(heaFloTop.port_b, heaPorTop) annotation (Line(points={{42,76},{42,90},
+          {44,90}},         color={191,0,0}));
+  connect(heaFloBot.port_b, heaPorBot) annotation (Line(points={{42,36},{44,36},
+          {44,18},{46,18}},   color={191,0,0}));
+  connect(heaFloTop.Q_flow, mul.u1[1]) annotation (Line(points={{36,70},{50,70},
+          {50,70.5},{61.2,70.5}}, color={0,0,127}));
+  connect(heaFloSid.Q_flow, mul.u2) annotation (Line(points={{36,50},{50,50},{50,
+          67},{61.2,67}},    color={0,0,127}));
+  connect(heaFloBot.Q_flow, mul.u3[1]) annotation (Line(points={{36,30},{36,28},
+          {58,28},{58,63.5},{61.2,63.5}}, color={0,0,127}));
+  connect(mul.y, sum1.u) annotation (Line(points={{70.4,67},{76.8,67}}, color={
           0,0,127}));
-  connect(sum1.y, Ql_flow) annotation (Line(points={{90.6,49},{98,49},{98,72},{
-          110,72}}, color={0,0,127}));
+  connect(sum1.y, Ql_flow) annotation (Line(points={{90.6,67},{98,67},{98,72},{110,
+          72}},     color={0,0,127}));
   connect(heaFloSid.port_b, theCol.port_a) annotation (Line(
-      points={{42,40},{52,40},{52,32}},
+      points={{42,56},{52,56},{52,48}},
       color={191,0,0},
       smooth=Smooth.None));
   connect(theCol.port_b, heaPorSid) annotation (Line(
-      points={{52,20},{52,-2.22045e-16},{56,-2.22045e-16}},
+      points={{52,36},{68,36}},
       color={191,0,0},
       smooth=Smooth.None));
   connect(jetInflow.port_a, H_a_flow.port_b)
-    annotation (Line(points={{-40,-80},{-50,-80}}, color={0,127,255}));
+    annotation (Line(points={{-66,-80},{-70,-80}}, color={0,127,255}));
   connect(outflow.port_a, H_b_flow.port_a)
-    annotation (Line(points={{40,-80},{46,-80},{50,-80}}, color={0,127,255}));
-  connect(jetInflow.ports_b[1:nSeg], vol[1:nSeg].ports[1])    annotation (Line(points={{-20,-80},
-          {-20,-16},{16,-16}},               color={0,127,255}));
-  connect(outflow.ports_b[1:nSeg], vol[1:nSeg].ports[2])    annotation (Line(points={{20,-80},
-          {20,-16},{16,-16}},                color={0,127,255}));
+    annotation (Line(points={{66,-80},{70,-80}},          color={0,127,255}));
+  connect(jetInflow.ports_b[1:nSeg], vol[1:nSeg].ports[1])    annotation (Line(points={{-46,-80},
+          {-46,-16},{13,-16}},               color={0,127,255}));
+  connect(outflow.ports_b[1:nSeg], vol[1:nSeg].ports[2])    annotation (Line(points={{46,-80},
+          {46,-16},{15,-16}},                color={0,127,255}));
 
     annotation (
 defaultComponentName="tan",
@@ -355,7 +367,8 @@ First implementation.
 </li>
 </ul>
 </html>"),
-Icon(graphics={
+Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}}),
+     graphics={
         Rectangle(
           extent={{-40,60},{40,20}},
           lineColor={255,0,0},
