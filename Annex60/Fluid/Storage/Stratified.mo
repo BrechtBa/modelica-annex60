@@ -81,14 +81,19 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     each X_start=X_start,
     each C_start=C_start,
     V=geometry.VLay,
-    nPorts=4,
+    nPorts=5,
     each m_flow_nominal=m_flow_nominal,
     each final mSenFac=1,
     each final m_flow_small=m_flow_small,
     each final allowFlowReversal=allowFlowReversal) "Tank segment"
     annotation (Placement(transformation(extent={{6,-16},{26,4}})));
 
-protected
+  BaseClasses.ThirdOrderStratifier str(
+   redeclare package Medium = Medium,
+   nSeg = nSeg,
+   m_flow_small = m_flow_small)
+    annotation (Placement(transformation(extent={{-20,-52},{0,-32}})));
+//protected
   constant Integer nPorts = 2 "Number of ports of volume";
 
   parameter Medium.ThermodynamicState sta_default = Medium.setState_pTX(
@@ -202,8 +207,8 @@ equation
           0},{100,0}},                     color={0,127,255}));
   for i in 1:(nSeg-1) loop
 
-    connect(vol[i].ports[3], m_vol_flow[i].port_a) annotation (Line(points={{17,-16},
-            {17,-22},{-38,-22},{-38,-82},{-28,-82}},      color={0,127,255}));
+    connect(vol[i].ports[3], m_vol_flow[i].port_a) annotation (Line(points={{16,-16},
+            {16,-22},{-38,-22},{-38,-82},{-28,-82}},      color={0,127,255}));
 
     connect(m_vol_flow[i].port_b, H_vol_flow[i].port_a) annotation (Line(points={{-8,-82},
             {34,-82},{34,-22},{20,-22},{20,-82},{2,-82}},color={0,127,255}));
@@ -265,11 +270,22 @@ equation
   connect(outflow.port_a, H_b_flow.port_a)
     annotation (Line(points={{66,-80},{70,-80}},          color={0,127,255}));
   connect(jetInflow.ports_b[1:nSeg], vol[1:nSeg].ports[1])    annotation (Line(points={{-46,-80},
-          {-46,-16},{13,-16}},               color={0,127,255}));
+          {-46,-16},{12.8,-16}},             color={0,127,255}));
   connect(outflow.ports_b[1:nSeg], vol[1:nSeg].ports[2])    annotation (Line(points={{46,-80},
-          {46,-16},{15,-16}},                color={0,127,255}));
+          {46,-16},{14.4,-16}},              color={0,127,255}));
 
-    annotation (
+  // str connections
+  connect(str.m_flow, m_vol_flow.m_flow) annotation (Line(points={{-22,-33.8},{-34,
+          -33.8},{-34,-71},{-18,-71}}, color={0,0,127}));
+  connect(str.H_flow, H_vol_flow.H_flow) annotation (Line(points={{-22,-50},{-28,
+          -50},{-28,-66},{12,-66},{12,-71}}, color={0,0,127}));
+  connect(str.heatPort, heaPorVol) annotation (Line(points={{0,-42},{8,-42},{8,-28},
+          {0,-28},{0,0}}, color={191,0,0}));
+  for i in 1:nSeg loop
+    connect(vol[i].ports[5], str.fluidPort[i]);
+  end for;
+
+       annotation (
 defaultComponentName="tan",
 Documentation(info="<html>
 <p>

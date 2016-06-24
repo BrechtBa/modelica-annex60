@@ -31,23 +31,19 @@ model ThirdOrderStratifier
     "Fluid port, needed to get pressure, temperature and species concentration"
     annotation (Placement(transformation(extent={{-110,-10},{-90,10}})));
 
-/*
-  Modelica.SIunits.SpecificEnthalpy[nSeg - 1] hOut 
-  "Extended vector with new outlet enthalpies to reduce numerical dissipation (at the boundary between two volumes)";
-*/
-protected
+//protected
   Modelica.SIunits.SpecificEnthalpy[nSeg] h
     "Extended vector with port enthalpies, needed to simplify loop";
-  Modelica.SIunits.HeatFlowRate Q_flow[nSeg]
-    "Heat exchange computed using upwind third order discretization scheme";
-/*  
-      Modelica.SIunits.HeatFlowRate Q_flow_upWind
-       "Heat exchange computed using upwind third order discretization scheme"; //Used to test the energy conservation
-  Real sig 
-    "Sign used to implement the third order upwind scheme without triggering a state event";
-  Real comSig 
-    "Sign used to implement the third order upwind scheme without triggering a state event";
-*/
+
+  Modelica.SIunits.HeatFlowRate H_flow_upwind[nSeg-1]
+    "Enthalpy flow computed using the 1st order upwind discretization scheme";
+
+  Modelica.SIunits.HeatFlowRate H_flow_quick[nSeg-1]
+    "Enthalpy flow computed using the QUICK discretization scheme";
+
+  Modelica.SIunits.HeatFlowRate H_flow_vol[nSeg-1]
+    "Enthalpy flow from volume i to volume i+1";
+
 equation
   assert(nSeg >= 4,
   "Number of segments of the enhanced stratified tank should be no less than 4 (nSeg>=4).");
@@ -62,50 +58,43 @@ equation
   for i in 1:nSeg loop
     h[i] = inStream(fluidPort[i].h_outflow);
   end for;
-/*
-  // Value that transitions between 0 and 1 as the flow reverses.
-  //sig = Modelica.Fluid.Utilities.regStep(
-  //  m_flow,
-  //  1,
-    0,
-    m_flow_small);
-             // at surface between port_a and vol1
 
-  comSig = 1 - sig;
-
-  // at surface between port_a and vol1
-  hOut[1] = sig*h[1] + comSig*h[2];
-  // at surface between vol[nSeg] and port_b
-  hOut[nSeg + 1] = sig*h[nSeg + 1] + comSig*h[nSeg + 2];
-
-  // Pros: These two equations can further reduce the temperature overshoot by using the upwind
-  // Cons: The minimum of nSeg hase to be 4 instead of 2.
-  hOut[2] = sig*h[2] + comSig*h[3];
-  // at surface between vol1 and vol2
-  hOut[nSeg] = sig*h[nSeg] + comSig*h[nSeg + 1];
-  // at surface between vol[nSeg-1] and vol[nSeg]
-
-  for i in 3:nSeg - 1 loop
-    // at surface between vol[i-1] and vol[i]
-    // QUICK method
-    hOut[i] = 0.5*(h[i] + h[i + 1]) - comSig*0.125*(h[i + 2] + h[i] - 2*h[i + 1])
-       - sig*0.125*(h[i - 1] + h[i + 1] - 2*h[i]);
-    //     hOut[i] = 0.5*(h[i]+h[i+1]); // Central difference method
-  end for;
+  /*
+  Nodes and flows between them
+  |       i-1      |       i       |      i+1      |
+  .               -->             -->
+  .           m_flow[i-1]       m_flow[i]
+  .           H_flow[i-1]       H_flow[i]
+  .
+  m_flow[i] > 0  (-->)
+  H_flow_upwind[i] = m_flow[i]*( h[i] )
+  H_flow_quick[i] = m_flow[i]*( 1/2*(h[i]+h[i+1]) - 1/8*(h[i-1]-2*h[i]+h[i+1]) )
+  
+  m_flow[i] < 0  (<--)
+  H_flow_upwind[i] = m_flow[i]*( h[i+1] )
+  H_flow_quick[i] = m_flow[i]*( 1/2*(h[i]+h[i+1]) - 1/8*(h[i+2]-2*h[i+1]+h[i]) )
+  .
   */
 
-  for i in 1:nSeg loop
-    // difference between QUICK and UPWIND; index of H_flow is same as hOut
-    //Q_flow[i] = m_flow[i]*(hOut[i + 1] - hOut[i]) - (H_flow[i + 1] - H_flow[i]);
-    Q_flow[i] = 0;
+  // enthalpy flow calculated with upwind discretization
+  for i in 1:nSeg-1 loop
+    H_flow_upwind[i] = semiLinear(m_flow[i],h[i],h[i+1]);
   end for;
 
-  //   Q_flow_upWind = sum(Q_flow[i] for i in 1:nSeg); //Used to test the energy conservation
+  // enthalpy flow calculated with QUICK discretization
+  for i in 1:nSeg-1 loop
+    H_flow_quick[i] = semiLinear(m_flow[i], 1/2*(h[i]+h[i+1]) - 1/8*(h[if i==1 then 1 else i-1]-2*h[i]+h[i+1]),  1/2*(h[i]+h[i+1]) - 1/8*(h[if i==nSeg-1 then nSeg else i+2]-2*h[i+1]+h[i]));
+  end for;
+
+  // used enthalpy flow from node i to node i+1
+  for i in 1:nSeg-1 loop
+    H_flow_vol[i] = alpha*H_flow_quick[i] + (1-alpha)*H_flow_upwind[i];
+  end for;
 
   for i in 1:nSeg loop
     // Add the difference back to the volume as heat flow. An under-relaxation is needed to reduce
     // oscillations caused by high order method
-    heatPort[i].Q_flow = Q_flow[i]*alpha;
+    heatPort[i].Q_flow = (if i==1 then 0 else H_flow_vol[i-1]-H_flow[i-1])-(if i==nSeg then 0 else H_flow_vol[i]-H_flow[i]);
   end for;
   annotation (Documentation(info="<html>
 <p>
