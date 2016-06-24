@@ -40,5 +40,4 @@ annotation (Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100}
           fillColor={0,0,0},
           fillPattern=FillPattern.Solid,
           pattern=LinePattern.None)}));
-
 end GeometryKlopper;

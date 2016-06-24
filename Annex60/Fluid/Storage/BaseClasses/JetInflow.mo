@@ -57,7 +57,7 @@ model JetInflow "Model for simulating jet inflow"
   Real Fr "Froude number";
 
   Real zMix = max(d, D*(7.09e-6*ResqrtDd*Fr^1.343*exp(-0.203e-6*ResqrtDd)));
-  Real rMix = Re*Annex60.Utilities.Math.Functions.spliceFunction(x=port_a.m_flow,pos=0.007, neg=0.004, deltax=m_flow_nominal/1000);
+  Real rMix = Re*Annex60.Utilities.Math.Functions.spliceFunction(x=port_a.m_flow,pos=0.0007, neg=0.0004, deltax=m_flow_nominal/1000);
 
   function mixingCorrelation
     "1st derivative of function that computes pressure drop for given mass flow rate"
