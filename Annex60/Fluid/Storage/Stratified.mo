@@ -90,10 +90,10 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     each final allowFlowReversal=allowFlowReversal) "Tank segment"
     annotation (Placement(transformation(extent={{6,-16},{26,4}})));
 
-  BaseClasses.ThirdOrderStratifier str(
-   redeclare package Medium = Medium,
-   nSeg = nSeg,
-   m_flow_small = m_flow_small)
+  BaseClasses.QuickConvectionDiscretization str(
+    redeclare package Medium = Medium,
+    nSeg=nSeg,
+    m_flow_small=m_flow_small)
     annotation (Placement(transformation(extent={{-20,-52},{0,-32}})));
 protected
   constant Integer nPorts = 2 "Number of ports of volume";

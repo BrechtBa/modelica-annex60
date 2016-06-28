@@ -1,6 +1,6 @@
 within Annex60.Fluid.Storage.BaseClasses;
-model ThirdOrderStratifier
-  "Model to reduce the numerical dissipation in a tank"
+model QuickConvectionDiscretization
+  "Model to convert an upwind discretization to QUICK discretization"
   replaceable package Medium = Modelica.Media.Interfaces.PartialMedium
     "Medium model" annotation (choicesAllMatching=true);
 
@@ -28,10 +28,10 @@ model ThirdOrderStratifier
 
   Modelica.Fluid.Interfaces.FluidPort_a[nSeg] fluidPort(redeclare each package
       Medium =         Medium)
-    "Fluid port, needed to get pressure, temperature and species concentration"
+    "Fluid port, needed to get pressure, temperature and species concentration of all volumes"
     annotation (Placement(transformation(extent={{-110,-10},{-90,10}})));
 
-//protected
+protected
   Modelica.SIunits.SpecificEnthalpy[nSeg] h
     "Extended vector with port enthalpies, needed to simplify loop";
 
@@ -98,35 +98,25 @@ equation
   end for;
   annotation (Documentation(info="<html>
 <p>
-This model reduces the numerical dissipation that is introduced
-by the standard first-order upwind discretization scheme which is
-created when connecting fluid volumes in series.
+This model can be used to convert an upwind convection discretization to a QUICK
+discretization. This model reduces the numerical dissipation that is introduced
+by the standard first-order upwind discretization scheme which is created when
+connecting fluid volumes in series.
 </p>
 <p>
 The model is used in conjunction with
-<a href=\"modelica://Modelica.Fluid.Storage.Stratified\">
-Modelica.Fluid.Storage.Stratified</a>.
-It computes a heat flux that needs to be added to each volume of <a href=\"modelica://Modelica.Fluid.Storage.Stratified\">
-Modelica.Fluid.Storage.Stratified</a> in order to give the results that a third-order upwind discretization scheme (QUICK) would give.
+<a href=\"modelica://Annex60.Fluid.Storage.Stratified\">
+Annex60.Fluid.Storage.Stratified</a>.
+It computes a heat flux that needs to be added to each volume of <a href=\"modelica://Annex60.Fluid.Storage.Stratified\">
+Annex60.Fluid.Storage.Stratified</a> in order to give the results that a third-order upwind discretization scheme (QUICK) would give.
 </p>
 <p>
 The QUICK method can cause oscillations in the tank temperatures since the high order method introduces numerical dispersion.
-There are two ways to reduce the oscillations:</p>
-<ul>
-<li>
-To use an under-relaxation coefficient <code>alpha</code> when adding the heat flux into the volume.
-</li>
-<li>
-To use the first-order upwind for <code>hOut[2]</code> and <code>hOut[nSeg]</code>. Note: Using it requires <code>nSeg>=4</code>.
-</li>
-</ul>
-<p>
-Both approaches are implemented in the model.
-</p>
+This is reduced by using an under-relaxation coefficient <code>alpha</code> when adding the heat flux into the volume.</p>
 <p>
 The model is used by
-<a href=\"modelica://Buildings.Fluid.Storage.StratifiedEnhanced\">
-Buildings.Fluid.Storage.StratifiedEnhanced</a>.
+<a href=\"modelica://Annex60.Fluid.Storage.Stratified\">
+Annex60.Fluid.Storage.Stratified</a>.
 </p>
 <h4>Limitations</h4>
 <p>
@@ -136,6 +126,7 @@ The model requires at least 4 fluid segments. Hence, set <code>nSeg</code> to 4 
 <ul>
 <li>
 June 28, 2016 by Brecht Baeten:<br/>
+Renamed.
 Updated the discretization calculations to be more clear.
 Added support for variable mass flow along the length of the discretization interval, for example caused by distributed inlets.
 </li>
@@ -181,4 +172,4 @@ First implementation.
           fillPattern=FillPattern.Solid,
           pattern=LinePattern.None,
           lineColor={0,0,0})}));
-end ThirdOrderStratifier;
+end QuickConvectionDiscretization;
