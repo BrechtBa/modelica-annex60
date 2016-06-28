@@ -1,5 +1,5 @@
 within Annex60.Fluid.Storage.Validations;
-model Example1
+model Experiment1
 
   Stratified tan(
     redeclare package Medium = Medium,
@@ -61,4 +61,4 @@ equation
             -100},{100,100}})),
     experiment(StopTime=3000),
     __Dymola_experimentSetupOutput(events=false));
-end Example1;
+end Experiment1;
