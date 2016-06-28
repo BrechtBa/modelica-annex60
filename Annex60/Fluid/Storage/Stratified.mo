@@ -16,7 +16,9 @@ model Stratified "Model of a stratified tank for thermal energy storage"
     "Height of inlet/outlet port_a compared to bottom tank";
   parameter Modelica.SIunits.Length h_port_b(min=0, max=hTan)
     "Height of inlet/outlet port_a compared to bottom tank";
-  parameter Integer nSeg(min=2) = 20
+  parameter Modelica.SIunits.Length d "Diameter of inlets";
+
+  parameter Integer nSeg(min=2) = 50
     "Number of volume segments   why do you use Seg here and Lay everywhere else";
 
   ////////////////////////////////////////////////////////////////////
@@ -65,11 +67,11 @@ model Stratified "Model of a stratified tank for thermal energy storage"
   Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_a heaPorTop
     "Heat port tank top (outside insulation)"
     annotation (Placement(transformation(extent={{38,84},{50,96}}),
-        iconTransformation(extent={{14,60},{26,72}})));
+        iconTransformation(extent={{8,72},{20,84}})));
   Modelica.Thermal.HeatTransfer.Interfaces.HeatPort_a heaPorBot
     "Heat port tank bottom (outside insulation). Leave unconnected for adiabatic condition"
     annotation (Placement(transformation(extent={{40,12},{52,24}}),
-        iconTransformation(extent={{14,-72},{26,-60}})));
+        iconTransformation(extent={{8,-84},{20,-72}})));
 
   // Models
   Annex60.Fluid.MixingVolumes.MixingVolume[nSeg] vol(
@@ -93,7 +95,7 @@ model Stratified "Model of a stratified tank for thermal energy storage"
    nSeg = nSeg,
    m_flow_small = m_flow_small)
     annotation (Placement(transformation(extent={{-20,-52},{0,-32}})));
-//protected
+protected
   constant Integer nPorts = 2 "Number of ports of volume";
 
   parameter Medium.ThermodynamicState sta_default = Medium.setState_pTX(
@@ -200,7 +202,6 @@ public
     d=d,
     hLay={(i - 0.5)*hTan/nSeg for i in 1:nSeg})
     annotation (Placement(transformation(extent={{66,-90},{46,-70}})));
-  parameter Modelica.SIunits.Length d "Diameter of inlets";
 
 equation
   connect(H_b_flow.port_b, port_b) annotation (Line(points={{90,-80},{92,-80},{92,
@@ -305,6 +306,10 @@ Buildings.Fluid.Storage.StratifiedEnhanced</a>.
 </html>", revisions="<html>
 <ul>
 <li>
+June 28, 2015, by Brecht Baeten:<br/>
+Added  <code>ThirdOrderStratifier</code> and updated icon.
+</li>
+<li>
 March 28, 2015, by Filip Jorissen:<br/>
 Propagated <code>allowFlowReversal</code> and <code>m_flow_small</code>
 and set <code>mSenFac=1</code>.
@@ -383,15 +388,27 @@ First implementation.
 </li>
 </ul>
 </html>"),
-Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}}),
+Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,
+            100}}),
      graphics={
         Rectangle(
-          extent={{-40,60},{40,20}},
+          extent={{-26,-68},{26,-76}},
+          lineColor={0,0,255},
+          pattern=LinePattern.None,
+          fillColor={0,0,127},
+          fillPattern=FillPattern.Solid),
+        Rectangle(
+          extent={{-30,74},{30,64}},
           lineColor={255,0,0},
           fillColor={255,0,0},
           fillPattern=FillPattern.Solid),
         Rectangle(
-          extent={{-40,-20},{40,-60}},
+          extent={{-40,68},{40,20}},
+          lineColor={255,0,0},
+          fillColor={255,0,0},
+          fillPattern=FillPattern.Solid),
+        Rectangle(
+          extent={{-40,-14},{40,-70}},
           lineColor={0,0,255},
           pattern=LinePattern.None,
           fillColor={0,0,127},
@@ -403,37 +420,13 @@ Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}})
           fillColor={0,0,127},
           fillPattern=FillPattern.Solid),
         Rectangle(
-          extent={{0,84},{-80,80}},
+          extent={{-76,52},{-80,-2}},
           lineColor={0,0,255},
           pattern=LinePattern.None,
           fillColor={0,0,127},
           fillPattern=FillPattern.Solid),
         Rectangle(
-          extent={{-76,84},{-80,-2}},
-          lineColor={0,0,255},
-          pattern=LinePattern.None,
-          fillColor={0,0,127},
-          fillPattern=FillPattern.Solid),
-        Rectangle(
-          extent={{82,0},{78,-86}},
-          lineColor={0,0,255},
-          pattern=LinePattern.None,
-          fillColor={0,0,127},
-          fillPattern=FillPattern.Solid),
-        Rectangle(
-          extent={{0,84},{-4,60}},
-          lineColor={0,0,255},
-          pattern=LinePattern.None,
-          fillColor={0,0,127},
-          fillPattern=FillPattern.Solid),
-        Rectangle(
-          extent={{82,-84},{2,-88}},
-          lineColor={0,0,255},
-          pattern=LinePattern.None,
-          fillColor={0,0,127},
-          fillPattern=FillPattern.Solid),
-        Rectangle(
-          extent={{6,-60},{2,-84}},
+          extent={{82,0},{78,-54}},
           lineColor={0,0,255},
           pattern=LinePattern.None,
           fillColor={0,0,127},
@@ -445,11 +438,11 @@ Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}})
           fillColor={0,0,127},
           fillPattern=FillPattern.Solid),
         Rectangle(
-          extent={{-40,20},{40,-20}},
+          extent={{-40,20},{40,-14}},
           lineColor={255,0,0},
           pattern=LinePattern.None,
-          fillColor={0,0,127},
-          fillPattern=FillPattern.CrossDiag),
+          fillColor={102,44,145},
+          fillPattern=FillPattern.Solid),
         Text(
           extent={{100,106},{134,74}},
           lineColor={0,0,127},
@@ -460,41 +453,55 @@ Icon(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,100}})
           fillPattern=FillPattern.Sphere,
           fillColor={255,255,255}),
         Rectangle(
-          extent={{50,68},{40,-66}},
+          extent={{50,66},{40,-66}},
           lineColor={0,0,255},
           pattern=LinePattern.None,
           fillColor={255,255,0},
           fillPattern=FillPattern.Solid),
         Rectangle(
-          extent={{-40,66},{-50,-68}},
-          lineColor={0,0,255},
-          pattern=LinePattern.None,
-          fillColor={255,255,0},
-          fillPattern=FillPattern.Solid),
-        Rectangle(
-          extent={{-48,68},{50,60}},
-          lineColor={0,0,255},
-          pattern=LinePattern.None,
-          fillColor={255,255,0},
-          fillPattern=FillPattern.Solid),
-        Rectangle(
-          extent={{-48,-60},{50,-68}},
+          extent={{-40,66},{-50,-66}},
           lineColor={0,0,255},
           pattern=LinePattern.None,
           fillColor={255,255,0},
           fillPattern=FillPattern.Solid),
         Line(
-          points={{26,72},{102,72},{100,72}},
+          points={{20,80},{70,80},{70,72},{102,72},{100,72}},
           color={127,0,0},
           pattern=LinePattern.Dot),
         Line(
-          points={{56,6},{56,72},{58,72}},
+          points={{52,0},{56,0},{56,72},{70,72}},
           color={127,0,0},
           pattern=LinePattern.Dot),
         Line(
-          points={{22,-74},{70,-74},{70,72}},
+          points={{22,-80},{70,-80},{70,72}},
           color={127,0,0},
-          pattern=LinePattern.Dot)}),
+          pattern=LinePattern.Dot),
+        Rectangle(
+          extent={{-40,52},{-80,48}},
+          lineColor={0,0,255},
+          pattern=LinePattern.None,
+          fillColor={0,0,127},
+          fillPattern=FillPattern.Solid),
+        Rectangle(
+          extent={{82,-50},{40,-54}},
+          lineColor={0,0,255},
+          pattern=LinePattern.None,
+          fillColor={0,0,127},
+          fillPattern=FillPattern.Solid),
+        Polygon(
+          points={{-50,66},{-20,80},{20,80},{50,66},{40,64},{20,72},{-20,72},{-40,
+              64},{-50,66}},
+          fillColor={255,255,0},
+          fillPattern=FillPattern.Solid,
+          pattern=LinePattern.None,
+          lineColor={0,0,0}),
+        Polygon(
+          points={{-50,-66},{-20,-80},{20,-80},{50,-66},{40,-64},{20,-72},
+              {-20,-72},{-40,-64},{-50,-66}},
+          fillColor={255,255,0},
+          fillPattern=FillPattern.Solid,
+          pattern=LinePattern.None,
+          lineColor={0,0,0})}),
     Diagram(coordinateSystem(preserveAspectRatio=false, extent={{-100,-100},{100,
             100}})));
 end Stratified;

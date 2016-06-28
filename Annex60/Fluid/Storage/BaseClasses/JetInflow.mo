@@ -19,18 +19,18 @@ model JetInflow "Model for simulating jet inflow"
     annotation(Evaluate=true);
                          // why not use t for thickness?
 
-  parameter Modelica.SIunits.Time tau = 60
+  parameter Modelica.SIunits.Time tau = 1
     "Mixing time constant for calculation of Froude number";
   parameter Real beta(final unit="K-1") = 0.43e-3
     "Volumetric expansion coefficient, default: water at approximately 50 degrees Celsius"
     annotation(Dialog(tab="Advanced"));
   Real[nSeg] wInj = if port_a.m_flow > 0
                     then Vlay.*{min(1,max(0,(1 -(dh[i]/zMix)^4)) +
-                                (if hIn<hLay[i]+dLay[i]/2 and Tmix >=Tin_b[i] or hIn>hLay[i]-dLay[i]/2 and Tmix <Tin_b[i]  then 1 else 0))
+                                (if hIn<hLay[i] and Tmix >=Tin_b[i] or hIn>hLay[i] and Tmix <Tin_b[i]  then 1 else 0))
                                   for i in 1:nSeg}
                     else Vlay.*{if dh[i]<dLay[i]/2 and dh[i]>-dLay[i]/2 then 1 else exp(-6*(dh[i]/zMix)^2) for i in 1:nSeg}
     "Weight for mass injection in each port";
-  Real wInjTot = sum(wInj);
+  Real wInjTot = max(1e-20,sum(wInj));
 
   Modelica.Fluid.Interfaces.FluidPort_a port_a(redeclare package Medium =
         Medium)
@@ -44,7 +44,7 @@ model JetInflow "Model for simulating jet inflow"
   Real coeffMix[nSeg]=rMix*wInj/wInjTot;
   Real hMix = if port_a.m_flow > 0 then
                 (inStream(port_a.h_outflow)+coeffMix*inStream(ports_b.h_outflow))/(1+rMix) else
-                inStream(ports_b.h_outflow)*wInj/wInjTot;  // the mixing temperature is of no importance otherwise
+                inStream(ports_b.h_outflow)*wInj/wInjTot;
   Real XiMix[Medium.nXi]=
               {if port_a.m_flow > 0 then
                   (XiIn_a[i]+coeffMix*XiIn_b[:,i])/(1+rMix)
@@ -56,7 +56,8 @@ model JetInflow "Model for simulating jet inflow"
   Real Re = abs(port_a.m_flow)*coeff_Re "Reynolds number";
   Real Fr "Froude number";
 
-  Real zMix = max(d, D*(7.09e-6*ResqrtDd*Fr^1.343*exp(-0.203e-6*ResqrtDd)));
+  Real zMix = Annex60.Utilities.Math.Functions.spliceFunction(x=port_a.m_flow,pos=max(d, D*(7.09e-6*ResqrtDd*max(0,Fr)^1.343*exp(-2.02633577113e-05*ResqrtDd))),neg=0.23*D, deltax=m_flow_nominal/1000);
+
   Real rMix = Re*Annex60.Utilities.Math.Functions.spliceFunction(x=port_a.m_flow,pos=0.0007, neg=0.0004, deltax=m_flow_nominal/1000);
 
   function mixingCorrelation
@@ -72,7 +73,7 @@ model JetInflow "Model for simulating jet inflow"
    zMix:=D*(7.09e-6*ResqrtDd*Fr^1.343*exp(-0.203e-6*ResqrtDd));
    annotation (Inline=true);
   end mixingCorrelation;
-protected
+//protected
   Real XiIn_a[Medium.nXi];
   Real XiIn_b[nSeg,Medium.nXi];
   Real ResqrtDd=Re*sqrt(D/d) "Eliminated subexpression";
@@ -85,12 +86,12 @@ protected
 
   final parameter Real coeff_v = rho_default*Modelica.Constants.pi*d^2/4
     "Coefficient for converting mass flow rate to velocity";
-  final parameter Real coeff_Re = rho_default*d/coeff_v/Medium.dynamicViscosity(state_default)
-    "Coefficient for efficient evaluation of Reynolds number - fixme: non-default state?";
+
+  final parameter Real coeff_Re = rho_default*d/coeff_v/(rho_default*0.80e-6)
+    "Medium.dynamicViscosity(state_default)  Coefficient for efficient evaluation of Reynolds number - fixme: non-default state?";
   final parameter Real coeff_Fr =  1/coeff_v/sqrt(Modelica.Constants.g_n*beta*D);
   final parameter Modelica.SIunits.Length dh[nSeg] = hLay-fill(hIn,nSeg)
-    "Height difference between inlet and outlets";  // should be "Height difference between volumes and inlet"
-
+    "Height difference between inlet and outlets";
 equation
   // The state for the Froude number decouples an algebraic loop
   // that would otherwise couple the enthalpy calculations and the mass flow rate calculations
@@ -99,7 +100,7 @@ equation
   // temperature difference is calculated as a gaussian wheighted average of the temperature surrounding the inlet, and the inlet temperature abs(Tsur-Tin_a)
   Tsur = sum( exp(-6*(hLay[i]-hIn)^2/(0.5*D)^2)*Tin_b[i] for i in 1:nSeg) / sum( exp(-6*(hLay[i]-hIn)^2/(0.5*D)^2) for i in 1:nSeg);
 
-  der(Fr) =  (abs(port_a.m_flow)*coeff_Fr/max(0.01,abs(Tsur-Tin_a)^0.5)-Fr)/tau;   // this is the wrong temperature difference the temperature difference in my model is calculated as a gaussian wheighted average of the temperature surrounding the inlet, and the inlet temperature abs(Tsur-Tin_a) ,  Tsur = sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2)*Tin_b[i] for i in 1:nSeg) / sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2) for i in 1:nSeg), indeed, this is poorly described in the paper
+  der(Fr) =  (abs(port_a.m_flow)*coeff_Fr/max(0.01,max(0.1,abs(Tsur-Tin_a))^0.5)-Fr)/tau;   // this is the wrong temperature difference the temperature difference in my model is calculated as a gaussian wheighted average of the temperature surrounding the inlet, and the inlet temperature abs(Tsur-Tin_a) ,  Tsur = sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2)*Tin_b[i] for i in 1:nSeg) / sum( exp(-6*(h_Lay[i]-hIn)^2/(0.5*D)^2) for i in 1:nSeg), indeed, this is poorly described in the paper
   port_a.h_outflow= hMix;
   ports_b.h_outflow=fill(hMix,nSeg)*(1+rMix) - inStream(ports_b.h_outflow)*rMix
     "Enthalpy that should flow to volumes after applying conservation of energy to fictive mass flow rate";

@@ -18,12 +18,12 @@ model ThirdOrderStratifier
 
   Modelica.Blocks.Interfaces.RealInput[nSeg - 1] m_flow
     "Mass flow rate between the volumes, m_flow[i] is positive when mass flows from volume i to volume i+1"
-                                                                                                        annotation (Placement(transformation(
+                                                                                                      annotation (Placement(transformation(
           extent={{-140,62},{-100,102}})));
 
   Modelica.Blocks.Interfaces.RealInput[nSeg - 1] H_flow
     "Enthalpy flow between the volumes,  H_flow[i] is positive when enthalpy flows from volume i to volume i+1"
-                                                                                                        annotation (Placement(transformation(
+                                                                                                      annotation (Placement(transformation(
           extent={{-140,-100},{-100,-60}})));
 
   Modelica.Fluid.Interfaces.FluidPort_a[nSeg] fluidPort(redeclare each package
@@ -60,7 +60,7 @@ equation
   end for;
 
   /*
-  Nodes and flows between them
+  Volumes and flows between them
   |       i-1      |       i       |      i+1      |
   .               -->             -->
   .           m_flow[i-1]       m_flow[i]
@@ -94,7 +94,7 @@ equation
   for i in 1:nSeg loop
     // Add the difference back to the volume as heat flow. An under-relaxation is needed to reduce
     // oscillations caused by high order method
-    heatPort[i].Q_flow = (if i==1 then 0 else H_flow_vol[i-1]-H_flow[i-1])-(if i==nSeg then 0 else H_flow_vol[i]-H_flow[i]);
+    heatPort[i].Q_flow = (if i==nSeg then 0 else H_flow_vol[i]-H_flow[i])-(if i==1 then 0 else H_flow_vol[i-1]-H_flow[i-1]);
   end for;
   annotation (Documentation(info="<html>
 <p>
