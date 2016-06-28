@@ -135,6 +135,11 @@ The model requires at least 4 fluid segments. Hence, set <code>nSeg</code> to 4 
 </html>", revisions="<html>
 <ul>
 <li>
+June 28, 2016 by Brecht Baeten:<br/>
+Updated the discretization calculations to be more clear.
+Added support for variable mass flow along the length of the discretization interval, for example caused by distributed inlets.
+</li>
+<li>
 December 14, 2012 by Michael Wetter:<br/>
 Removed unused protected parameters <code>sta0</code> and <code>cp0</code>.
 </li>
